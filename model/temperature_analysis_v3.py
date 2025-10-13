@@ -254,7 +254,9 @@ def main():
     model, X_train, X_val, y_train, y_val = train_catboost_model(X, y, feature_columns)
     
     # 5. 검증 데이터에 해당하는 원본 데이터 추출
-    df_val = df.iloc[X_val.index]
+    # X_val의 인덱스를 사용하여 원본 데이터에서 해당 행 추출
+    val_indices = X_val.index
+    df_val = df.loc[val_indices]
     
     # 6. 상세 분석 그래프 생성
     r2, rmse = create_detailed_analysis_plots(model, X_val, y_val, df_val)

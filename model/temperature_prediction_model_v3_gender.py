@@ -169,7 +169,7 @@ def plot_results(model, X_val, y_val, feature_importance_df):
     plt.savefig('temperature_prediction_results_v3_gender.png', dpi=300, bbox_inches='tight')
     plt.show()
 
-def create_detailed_classification_analysis(model, X_val, y_val, feature_columns):
+def create_detailed_classification_analysis(model, X_val, y_val, feature_columns, feature_importance_df):
     """상세한 분류 분석"""
     print("상세 분류 분석 중...")
     
@@ -267,7 +267,7 @@ def main():
     plot_results(model, X_val, y_val, feature_importance_df)
     
     # 7. 상세 분류 분석
-    create_detailed_classification_analysis(model, X_val, y_val, feature_columns)
+    create_detailed_classification_analysis(model, X_val, y_val, feature_columns, feature_importance_df)
     
     # 8. 모델 저장
     model.save_model('temperature_prediction_model_v3_gender.cbm')
