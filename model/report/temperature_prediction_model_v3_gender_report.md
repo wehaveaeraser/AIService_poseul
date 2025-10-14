@@ -1,7 +1,7 @@
 # Temperature Prediction Model V3 Gender Report
 ## CatBoost 기반 성별 포함 체온 예측 모델
 
-**작성일**: 2025-01-27  
+**작성일**: 2025-10-14  
 **모델**: CatBoost Classifier  
 **데이터**: 4,606개 샘플 (S046 이상치 제거 후)  
 **특성**: 5개 (BMI, mean_sa02, HRV_SDNN, HR_mean, Gender)  
