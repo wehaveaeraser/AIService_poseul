@@ -12,14 +12,15 @@
 
 ## 📊 데이터 파일들
 https://physionet.org/content/dreamt/2.1.0/data_64Hz/#files-panel
+
 원데이터 https://github.com/WillKeWang/DREAMT_FE
+
 DREAMT: 멀티센서 웨어러블 기술을 이용한 실시간 수면 단계 추정 데이터셋
 
 ## 정제 데이터
 | 파일명 | 용도 | 크기/특성 |
 |--------|------|-----------|
-| `extracted_data_sampled_20rows.csv` | 실시간 생체신호 데이터 (샘플) | 20행 (실험용) |
-| `extracted_data_with_sid_info.csv` | 실시간 생체신호 데이터 (전체) | 4,649행 → 4,606행 (S046 이상치 43개 제거 후) <br> 특성: BMI, mean_sa02, HRV_SDNN, HR_mean, gender, TEMP_median 등 |
+| `extracted_data_sampled_20rows.csv` | 실시간 생체신호 데이터 | 4,650행 | 
 
 ---
 

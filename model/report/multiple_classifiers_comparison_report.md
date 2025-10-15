@@ -1,7 +1,7 @@
 # Multiple Classifiers Comparison Report
 ## 8가지 분류기 성능 비교 분석
 
-**작성일**: 2025-01-27  
+**작성일**: 2025-10-14  
 **모델**: 8가지 분류기 (Random Forest, XGBoost, SVM, Logistic Regression, KNN, Naive Bayes, Decision Tree, CatBoost)  
 **데이터**: 4,606개 샘플 (S046 이상치 제거 후)  
 **최종 성능**: CatBoost F1-score 0.6866 (1위)
