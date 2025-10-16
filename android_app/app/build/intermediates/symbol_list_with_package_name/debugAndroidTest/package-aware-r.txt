@@ -1,0 +1,3 @@
+com.aiservice.poseul.test
+style WhiteBackgroundDialogTheme
+style WhiteBackgroundTheme
