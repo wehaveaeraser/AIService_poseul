@@ -105,6 +105,7 @@ def predict():
         
         # 요청 데이터 파싱
         data = request.get_json()
+        logger.info(f"📱 앱에서 예측 요청 받음: {data}")
         
         # 필수 파라미터 확인
         required_params = ['hr_mean', 'hrv_sdnn', 'bmi', 'mean_sa02', 'gender']
@@ -134,12 +135,14 @@ def predict():
         
         temperature_category = classify_temperature(predicted_temp)
         
-        return jsonify({
+        result = {
             'success': True,
             'predicted_temperature': predicted_temp,
             'temperature_category': temperature_category,
             'input_data': data
-        })
+        }
+        logger.info(f"✅ 예측 완료: {predicted_temp:.2f}°C ({temperature_category})")
+        return jsonify(result)
         
     except Exception as e:
         logger.error(f"예측 실패: {str(e)}")

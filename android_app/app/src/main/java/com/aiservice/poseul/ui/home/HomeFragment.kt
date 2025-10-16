@@ -1,12 +1,15 @@
 package com.aiservice.poseul.ui.home
 
 import android.os.Bundle
+import android.util.Log
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import androidx.fragment.app.Fragment
 import androidx.lifecycle.ViewModelProvider
 import com.aiservice.poseul.databinding.FragmentHomeBinding
+import com.aiservice.poseul.service.ModelService
+import com.aiservice.poseul.service.PredictionResult
 import com.github.mikephil.charting.data.Entry
 import com.github.mikephil.charting.data.LineData
 import com.github.mikephil.charting.data.LineDataSet
@@ -17,6 +20,7 @@ class HomeFragment : Fragment() {
     private var _binding: FragmentHomeBinding? = null
     private val binding get() = _binding!!
     private lateinit var homeViewModel: HomeViewModel
+    private val modelService = ModelService()
 
     override fun onCreateView(
         inflater: LayoutInflater,
@@ -33,6 +37,7 @@ class HomeFragment : Fragment() {
         
         setupTemperatureDisplay()
         setupHeartRateChart()
+        setupModelTest()
         observeViewModel()
     }
 
@@ -93,6 +98,53 @@ class HomeFragment : Fragment() {
         val lineData = LineData(dataSet)
         binding.heartRateChart.data = lineData
         binding.heartRateChart.invalidate()
+    }
+
+    private fun setupModelTest() {
+        // 모델 테스트 버튼 클릭 이벤트
+        binding.testModelButton.setOnClickListener {
+            testModelConnection()
+        }
+    }
+
+    private fun testModelConnection() {
+        CoroutineScope(Dispatchers.Main).launch {
+            try {
+                Log.d("ModelTest", "🧪 모델 테스트 시작...")
+                
+                // 테스트 데이터로 예측 요청
+                val result = modelService.predictTemperature(
+                    heartRate = 75,
+                    hrvSdnn = 42.5,
+                    bmi = 23.0,
+                    meanSa02 = 98.0,
+                    userGender = "F"
+                )
+                
+                when (result) {
+                    is PredictionResult.Success -> {
+                        Log.d("ModelTest", "✅ 모델 연동 성공!")
+                        Log.d("ModelTest", "예측 체온: ${result.temperature}°C")
+                        Log.d("ModelTest", "온도 분류: ${result.category}")
+                        
+                        // UI 업데이트
+                        binding.temperatureValue.text = "${result.temperature}°C"
+                        updateTemperatureStatus(result.temperature)
+                        binding.errorText.text = "✅ 모델 연동 성공! 체온: ${result.temperature}°C"
+                        binding.errorText.visibility = View.VISIBLE
+                    }
+                    is PredictionResult.Error -> {
+                        Log.e("ModelTest", "❌ 모델 연동 실패: ${result.message}")
+                        binding.errorText.text = "❌ 모델 연동 실패: ${result.message}"
+                        binding.errorText.visibility = View.VISIBLE
+                    }
+                }
+            } catch (e: Exception) {
+                Log.e("ModelTest", "❌ 테스트 중 오류: ${e.message}")
+                binding.errorText.text = "❌ 테스트 중 오류: ${e.message}"
+                binding.errorText.visibility = View.VISIBLE
+            }
+        }
     }
 
     private fun observeViewModel() {

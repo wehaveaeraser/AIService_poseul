@@ -46,6 +46,7 @@ id retrain_progress
 id retrain_status
 id temperature_status
 id temperature_value
+id test_model_button
 id user_email_text
 id user_id_text
 id user_info_card

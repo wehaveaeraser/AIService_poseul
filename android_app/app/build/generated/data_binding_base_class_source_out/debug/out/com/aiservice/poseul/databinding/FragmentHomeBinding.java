@@ -4,6 +4,7 @@ package com.aiservice.poseul.databinding;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.Button;
 import android.widget.ProgressBar;
 import android.widget.ScrollView;
 import android.widget.TextView;
@@ -36,15 +37,20 @@ public final class FragmentHomeBinding implements ViewBinding {
   @NonNull
   public final TextView temperatureValue;
 
+  @NonNull
+  public final Button testModelButton;
+
   private FragmentHomeBinding(@NonNull ScrollView rootView, @NonNull TextView errorText,
       @NonNull LineChart heartRateChart, @NonNull ProgressBar progressBar,
-      @NonNull TextView temperatureStatus, @NonNull TextView temperatureValue) {
+      @NonNull TextView temperatureStatus, @NonNull TextView temperatureValue,
+      @NonNull Button testModelButton) {
     this.rootView = rootView;
     this.errorText = errorText;
     this.heartRateChart = heartRateChart;
     this.progressBar = progressBar;
     this.temperatureStatus = temperatureStatus;
     this.temperatureValue = temperatureValue;
+    this.testModelButton = testModelButton;
   }
 
   @Override
@@ -104,8 +110,14 @@ public final class FragmentHomeBinding implements ViewBinding {
         break missingId;
       }
 
+      id = R.id.test_model_button;
+      Button testModelButton = ViewBindings.findChildViewById(rootView, id);
+      if (testModelButton == null) {
+        break missingId;
+      }
+
       return new FragmentHomeBinding((ScrollView) rootView, errorText, heartRateChart, progressBar,
-          temperatureStatus, temperatureValue);
+          temperatureStatus, temperatureValue, testModelButton);
     }
     String missingId = rootView.getResources().getResourceName(id);
     throw new NullPointerException("Missing required view with ID: ".concat(missingId));
