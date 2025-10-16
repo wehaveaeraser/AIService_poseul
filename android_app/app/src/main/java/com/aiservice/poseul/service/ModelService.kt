@@ -2,44 +2,156 @@ package com.aiservice.poseul.service
 
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
-import java.io.File
-import java.io.FileInputStream
-import java.io.ObjectInputStream
+import kotlinx.coroutines.delay
+import java.net.HttpURLConnection
+import java.net.URL
+import java.io.OutputStreamWriter
+import com.google.gson.Gson
+import com.google.gson.annotations.SerializedName
 
 class ModelService {
     
-    suspend fun predictTemperature(
-        heartRate: Int,
-        roomTemperature: Float,
-        humidity: Float,
-        userAge: Int,
-        userGender: String
-    ): Float = withContext(Dispatchers.IO) {
-        // 실제 구현에서는 CatBoost 모델을 로드하고 예측을 수행합니다
-        // 현재는 시뮬레이션된 예측 결과를 반환합니다
-        
-        // 간단한 시뮬레이션 로직
-        val baseTemp = roomTemperature
-        val heartRateFactor = (heartRate - 70) * 0.01f
-        val humidityFactor = (humidity - 50) * 0.02f
-        val ageFactor = (userAge - 30) * 0.005f
-        val genderFactor = if (userGender == "female") 0.5f else 0f
-        
-        val predictedTemp = baseTemp + heartRateFactor + humidityFactor + ageFactor + genderFactor
-        
-        // 15-35도 범위로 제한
-        predictedTemp.coerceIn(15f, 35f)
+    companion object {
+        private const val SERVER_URL = "http://192.168.0.143:5000" // 실제 서버 IP 주소
+        private const val PREDICT_ENDPOINT = "/predict"
+        private const val HEALTH_ENDPOINT = "/health"
+        private const val MODEL_INFO_ENDPOINT = "/model_info"
     }
     
-    suspend fun loadModel(): Boolean = withContext(Dispatchers.IO) {
+    private val gson = Gson()
+    
+    data class PredictionRequest(
+        @SerializedName("hr_mean") val hrMean: Double,
+        @SerializedName("hrv_sdnn") val hrvSdnn: Double,
+        @SerializedName("bmi") val bmi: Double,
+        @SerializedName("mean_sa02") val meanSa02: Double,
+        @SerializedName("gender") val gender: String
+    )
+    
+    data class PredictionResponse(
+        @SerializedName("success") val success: Boolean,
+        @SerializedName("predicted_temperature") val predictedTemperature: Double,
+        @SerializedName("temperature_category") val temperatureCategory: String,
+        @SerializedName("input_data") val inputData: PredictionRequest?,
+        @SerializedName("error") val error: String?
+    )
+    
+    data class HealthResponse(
+        @SerializedName("status") val status: String,
+        @SerializedName("model_loaded") val modelLoaded: Boolean
+    )
+    
+    suspend fun predictTemperature(
+        heartRate: Int,
+        hrvSdnn: Double,
+        bmi: Double,
+        meanSa02: Double,
+        userGender: String
+    ): PredictionResult = withContext(Dispatchers.IO) {
         try {
-            // 실제 구현에서는 assets 폴더나 다운로드된 모델 파일을 로드합니다
-            // val modelFile = File(context.filesDir, "temperature_prediction_model_v3_gender.cbm")
-            // val model = CatBoost.loadModel(modelFile.absolutePath)
-            true
+            // 서버 상태 확인
+            if (!checkServerHealth()) {
+                return@withContext PredictionResult.Error("서버에 연결할 수 없습니다.")
+            }
+            
+            // 예측 요청 데이터 준비
+            val request = PredictionRequest(
+                hrMean = heartRate.toDouble(),
+                hrvSdnn = hrvSdnn,
+                bmi = bmi,
+                meanSa02 = meanSa02,
+                gender = if (userGender.lowercase() == "female") "F" else "M"
+            )
+            
+            // HTTP 요청 수행
+            val response = makePredictionRequest(request)
+            
+            if (response.success) {
+                PredictionResult.Success(
+                    temperature = response.predictedTemperature.toFloat(),
+                    category = response.temperatureCategory
+                )
+            } else {
+                PredictionResult.Error(response.error ?: "예측 실패")
+            }
+            
+        } catch (e: Exception) {
+            PredictionResult.Error("예측 중 오류 발생: ${e.message}")
+        }
+    }
+    
+    private suspend fun checkServerHealth(): Boolean = withContext(Dispatchers.IO) {
+        try {
+            val url = URL("$SERVER_URL$HEALTH_ENDPOINT")
+            val connection = url.openConnection() as HttpURLConnection
+            connection.requestMethod = "GET"
+            connection.connectTimeout = 5000
+            connection.readTimeout = 5000
+            
+            val responseCode = connection.responseCode
+            if (responseCode == HttpURLConnection.HTTP_OK) {
+                val response = connection.inputStream.bufferedReader().use { it.readText() }
+                val healthResponse = gson.fromJson(response, HealthResponse::class.java)
+                healthResponse.modelLoaded
+            } else {
+                false
+            }
         } catch (e: Exception) {
             false
         }
+    }
+    
+    private suspend fun makePredictionRequest(request: PredictionRequest): PredictionResponse = withContext(Dispatchers.IO) {
+        val url = URL("$SERVER_URL$PREDICT_ENDPOINT")
+        val connection = url.openConnection() as HttpURLConnection
+        
+        connection.requestMethod = "POST"
+        connection.setRequestProperty("Content-Type", "application/json")
+        connection.doOutput = true
+        connection.connectTimeout = 10000
+        connection.readTimeout = 10000
+        
+        // 요청 데이터 전송
+        val requestJson = gson.toJson(request)
+        val outputStream = connection.outputStream
+        val writer = OutputStreamWriter(outputStream)
+        writer.write(requestJson)
+        writer.flush()
+        writer.close()
+        
+        // 응답 읽기
+        val responseCode = connection.responseCode
+        val responseText = if (responseCode == HttpURLConnection.HTTP_OK) {
+            connection.inputStream.bufferedReader().use { it.readText() }
+        } else {
+            connection.errorStream.bufferedReader().use { it.readText() }
+        }
+        
+        gson.fromJson(responseText, PredictionResponse::class.java)
+    }
+    
+    suspend fun getModelInfo(): String = withContext(Dispatchers.IO) {
+        try {
+            val url = URL("$SERVER_URL$MODEL_INFO_ENDPOINT")
+            val connection = url.openConnection() as HttpURLConnection
+            connection.requestMethod = "GET"
+            connection.connectTimeout = 5000
+            connection.readTimeout = 5000
+            
+            val responseCode = connection.responseCode
+            if (responseCode == HttpURLConnection.HTTP_OK) {
+                connection.inputStream.bufferedReader().use { it.readText() }
+            } else {
+                "모델 정보를 가져올 수 없습니다."
+            }
+        } catch (e: Exception) {
+            "모델 정보 조회 실패: ${e.message}"
+        }
+    }
+    
+    suspend fun loadModel(): Boolean = withContext(Dispatchers.IO) {
+        // 서버 기반 모델이므로 서버 상태만 확인
+        checkServerHealth()
     }
     
     suspend fun retrainModel(newData: List<TrainingData>): Boolean = withContext(Dispatchers.IO) {
@@ -51,12 +163,23 @@ class ModelService {
             // 4. 모델 저장
             
             // 시뮬레이션을 위한 대기
-            kotlinx.coroutines.delay(5000)
+            delay(5000)
             true
         } catch (e: Exception) {
             false
         }
     }
+}
+
+sealed class PredictionResult {
+    data class Success(
+        val temperature: Float,
+        val category: String
+    ) : PredictionResult()
+    
+    data class Error(
+        val message: String
+    ) : PredictionResult()
 }
 
 data class TrainingData(
