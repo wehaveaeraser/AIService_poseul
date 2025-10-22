@@ -34,7 +34,7 @@
                     android:text="@string/user_info_title"
                     android:textSize="18sp"
                     android:textStyle="bold"
-                    android:textColor="@color/text_primary" />
+                    android:textColor="#FF212121" />
 
                 <LinearLayout
                     android:layout_width="match_parent"
@@ -52,7 +52,7 @@
                             android:layout_width="80dp"
                             android:layout_height="wrap_content"
                             android:text="@string/user_id"
-                            android:textColor="@color/text_secondary" />
+                            android:textColor="#FF757575" />
 
                         <TextView
                             android:id="@+id/user_id_text"
@@ -60,7 +60,7 @@
                             android:layout_height="wrap_content"
                             android:layout_weight="1"
                             android:text="user123"
-                            android:textColor="@color/text_primary" />
+                            android:textColor="#FF212121" />
 
                     </LinearLayout>
 
@@ -74,7 +74,7 @@
                             android:layout_width="80dp"
                             android:layout_height="wrap_content"
                             android:text="@string/user_name"
-                            android:textColor="@color/text_secondary" />
+                            android:textColor="#FF757575" />
 
                         <TextView
                             android:id="@+id/user_name_text"
@@ -82,7 +82,7 @@
                             android:layout_height="wrap_content"
                             android:layout_weight="1"
                             android:text="홍길동"
-                            android:textColor="@color/text_primary" />
+                            android:textColor="#FF212121" />
 
                     </LinearLayout>
 
@@ -95,7 +95,7 @@
                             android:layout_width="80dp"
                             android:layout_height="wrap_content"
                             android:text="@string/user_email"
-                            android:textColor="@color/text_secondary" />
+                            android:textColor="#FF757575" />
 
                         <TextView
                             android:id="@+id/user_email_text"
@@ -103,7 +103,7 @@
                             android:layout_height="wrap_content"
                             android:layout_weight="1"
                             android:text="user@example.com"
-                            android:textColor="@color/text_primary" />
+                            android:textColor="#FF212121" />
 
                     </LinearLayout>
 
@@ -153,7 +153,7 @@
                     android:text="모델 관리"
                     android:textSize="18sp"
                     android:textStyle="bold"
-                    android:textColor="@color/text_primary" />
+                    android:textColor="#FF212121" />
 
                 <TextView
                     android:layout_width="match_parent"
@@ -161,7 +161,7 @@
                     android:layout_marginTop="8dp"
                     android:layout_marginBottom="16dp"
                     android:text="새로운 데이터로 모델을 재학습할 수 있습니다."
-                    android:textColor="@color/text_secondary" />
+                    android:textColor="#FF757575" />
 
                 <com.google.android.material.button.MaterialButton
                     android:id="@+id/retrain_button"
@@ -185,7 +185,7 @@
                     android:layout_height="wrap_content"
                     android:layout_marginTop="8dp"
                     android:gravity="center"
-                    android:textColor="@color/primary_blue"
+                    android:textColor="#FF2196F3"
                     android:textSize="14sp"
                     android:visibility="gone" />
 

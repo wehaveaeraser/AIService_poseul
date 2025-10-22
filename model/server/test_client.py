@@ -50,33 +50,47 @@ def test_prediction():
     # 테스트 데이터
     test_cases = [
         {
-            "name": "정상 체온 예상",
+            "name": "정상 체온 예상 (30대 여성)",
             "data": {
                 "hr_mean": 72.0,
                 "hrv_sdnn": 45.2,
                 "bmi": 22.5,
                 "mean_sa02": 98.5,
-                "gender": "F"
+                "gender": "F",
+                "age": 30
             }
         },
         {
-            "name": "높은 심박수",
+            "name": "높은 심박수 (40대 남성)",
             "data": {
                 "hr_mean": 95.0,
                 "hrv_sdnn": 35.8,
                 "bmi": 25.1,
                 "mean_sa02": 97.2,
-                "gender": "M"
+                "gender": "M",
+                "age": 45
             }
         },
         {
-            "name": "낮은 BMI",
+            "name": "낮은 BMI (20대 여성)",
             "data": {
                 "hr_mean": 65.0,
                 "hrv_sdnn": 52.1,
                 "bmi": 18.5,
                 "mean_sa02": 99.1,
-                "gender": "F"
+                "gender": "F",
+                "age": 25
+            }
+        },
+        {
+            "name": "고령자 (70대 남성)",
+            "data": {
+                "hr_mean": 68.0,
+                "hrv_sdnn": 28.5,
+                "bmi": 24.0,
+                "mean_sa02": 96.8,
+                "gender": "M",
+                "age": 72
             }
         }
     ]

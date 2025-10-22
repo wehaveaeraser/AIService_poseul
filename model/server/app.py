@@ -29,8 +29,8 @@ def load_model():
     global model, model_loaded
     
     try:
-        # 모델 파일 경로 (압축 해제된 파일)
-        model_path = '../../ai_thermal_model.pkl'
+        # 모델 파일 경로 (age 포함 모델)
+        model_path = '../pycode/ai_thermal_model_with_age.pkl'
         
         if not os.path.exists(model_path):
             logger.error(f"모델 파일을 찾을 수 없습니다: {model_path}")
@@ -51,9 +51,9 @@ def load_model():
         logger.error(f"모델 로드 실패: {str(e)}")
         return False
 
-def predict_temperature(hr_mean, hrv_sdnn, bmi, mean_sa02, gender):
+def predict_temperature(hr_mean, hrv_sdnn, bmi, mean_sa02, gender, age):
     """
-    체온 예측 함수
+    체온 예측 함수 (나이 포함)
     
     Parameters:
     - hr_mean: 평균 심박수
@@ -61,6 +61,7 @@ def predict_temperature(hr_mean, hrv_sdnn, bmi, mean_sa02, gender):
     - bmi: 체질량지수
     - mean_sa02: 평균 산소포화도
     - gender: 성별 ('M' 또는 'F')
+    - age: 나이
     
     Returns:
     - 예측된 체온 (°C)
@@ -71,6 +72,8 @@ def predict_temperature(hr_mean, hrv_sdnn, bmi, mean_sa02, gender):
     # 파생 피처 계산
     hrv_hr_ratio = hrv_sdnn / hr_mean
     bmi_hr_interaction = bmi * hr_mean
+    age_bmi_interaction = age * bmi
+    age_hrv_ratio = age / (hrv_sdnn + 1)  # 0으로 나누기 방지
     
     # 데이터 준비
     data = pd.DataFrame({
@@ -79,6 +82,9 @@ def predict_temperature(hr_mean, hrv_sdnn, bmi, mean_sa02, gender):
         'HRV_SDNN': [hrv_sdnn],
         'hrv_hr_ratio': [hrv_hr_ratio],
         'bmi_hr_interaction': [bmi_hr_interaction],
+        'age': [age],
+        'age_bmi_interaction': [age_bmi_interaction],
+        'age_hrv_ratio': [age_hrv_ratio],
         'gender': [gender]
     })
     
@@ -108,7 +114,7 @@ def predict():
         logger.info(f"📱 앱에서 예측 요청 받음: {data}")
         
         # 필수 파라미터 확인
-        required_params = ['hr_mean', 'hrv_sdnn', 'bmi', 'mean_sa02', 'gender']
+        required_params = ['hr_mean', 'hrv_sdnn', 'bmi', 'mean_sa02', 'gender', 'age']
         for param in required_params:
             if param not in data:
                 return jsonify({
@@ -121,7 +127,8 @@ def predict():
             hrv_sdnn=float(data['hrv_sdnn']),
             bmi=float(data['bmi']),
             mean_sa02=float(data['mean_sa02']),
-            gender=str(data['gender'])
+            gender=str(data['gender']),
+            age=int(data['age'])
         )
         
         # 온도 분류
@@ -159,8 +166,8 @@ def model_info():
         }), 500
     
     return jsonify({
-        'model_type': '앙상블 모델 (RandomForest + ExtraTrees + GradientBoosting)',
-        'features': ['bmi', 'mean_sa02', 'HRV_SDNN', 'hrv_hr_ratio', 'bmi_hr_interaction', 'gender'],
+        'model_type': '앙상블 모델 (RandomForest + ExtraTrees + GradientBoosting) - 나이 포함',
+        'features': ['bmi', 'mean_sa02', 'HRV_SDNN', 'hrv_hr_ratio', 'bmi_hr_interaction', 'age', 'age_bmi_interaction', 'age_hrv_ratio', 'gender'],
         'target': 'TEMP_median (체온)',
         'model_loaded': model_loaded
     })

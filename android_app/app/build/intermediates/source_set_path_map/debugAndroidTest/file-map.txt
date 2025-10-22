@@ -1,6 +1,0 @@
-com.aiservice.poseul.test.app-annotation-experimental-1.3.0-0 C:\Users\dbswl\.gradle\caches\9.0-milestone-1\transforms\35ee12746e5804fd5d3aac5b87ca0c9c\transformed\annotation-experimental-1.3.0\res
-com.aiservice.poseul.test.app-core-1.5.0-1 C:\Users\dbswl\.gradle\caches\9.0-milestone-1\transforms\ef4923a5c3b4a4d7520924e37bfec0b9\transformed\core-1.5.0\res
-com.aiservice.poseul.test.app-androidTest-2 C:\aisurvice\AIService_poseul\android_app\app\build\generated\res\resValues\androidTest\debug
-com.aiservice.poseul.test.app-mergeDebugAndroidTestResources-3 C:\aisurvice\AIService_poseul\android_app\app\build\intermediates\incremental\debugAndroidTest\mergeDebugAndroidTestResources\merged.dir
-com.aiservice.poseul.test.app-mergeDebugAndroidTestResources-4 C:\aisurvice\AIService_poseul\android_app\app\build\intermediates\incremental\debugAndroidTest\mergeDebugAndroidTestResources\stripped.dir
-com.aiservice.poseul.test.app-merged_res-5 C:\aisurvice\AIService_poseul\android_app\app\build\intermediates\merged_res\debugAndroidTest
