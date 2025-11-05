@@ -31,6 +31,22 @@
     <string name="device_status">기기 상태</string>
     <string name="device_online">온라인</string>
     <string name="device_offline">오프라인</string>
+    <string name="power_on">켜기</string>
+    <string name="power_off">끄기</string>
+    <string name="power_toggle">전원</string>
+    <string name="temperature_up">온도 ↑</string>
+    <string name="temperature_down">온도 ↓</string>
+    <string name="mode">모드</string>
+    <string name="wind_strength">풍량</string>
+    <string name="refresh">새로고침</string>
+    <string name="mode_cool">냉방</string>
+    <string name="mode_dry">제습</string>
+    <string name="mode_clean">공기청정</string>
+    <string name="mode_auto">자동</string>
+    <string name="wind_high">강</string>
+    <string name="wind_mid">중</string>
+    <string name="wind_low">약</string>
+    <string name="wind_auto">자동</string>
     
     <!-- Common -->
     <string name="loading">로딩 중...</string>

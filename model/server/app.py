@@ -1,6 +1,7 @@
 """
 AI 체온 예측 서버
 앙상블 모델을 사용하여 체온을 예측하는 Flask API 서버
+에어컨 제어 API 포함
 """
 
 from flask import Flask, request, jsonify
@@ -9,6 +10,7 @@ import joblib
 import pandas as pd
 import numpy as np
 import os
+import sys
 import zipfile
 import tempfile
 import logging
@@ -16,6 +18,24 @@ import logging
 # 로깅 설정
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
+
+# IoT 폴더의 모듈 import를 위한 경로 추가
+sys.path.insert(0, os.path.join(os.path.dirname(__file__), '../../IoT'))
+try:
+    from airconditional import (
+        get_air_conditioner_state,
+        set_temperature,
+        set_job_mode,
+        set_wind_strength,
+        set_power,
+        set_timer,
+        AIR_CONDITIONER_DEVICE_ID
+    )
+    AIR_CONDITIONER_AVAILABLE = True
+    logger.info("✅ 에어컨 모듈 로드 성공")
+except ImportError as e:
+    logger.warning(f"⚠️  에어컨 모듈을 불러올 수 없습니다: {e}")
+    AIR_CONDITIONER_AVAILABLE = False
 
 app = Flask(__name__)
 CORS(app)  # CORS 허용
@@ -172,6 +192,146 @@ def model_info():
         'target': 'TEMP_median (체온)',
         'model_loaded': model_loaded
     })
+
+# ==================== 에어컨 제어 API ====================
+
+@app.route('/air_conditioner/state', methods=['GET'])
+def get_air_conditioner_state_api():
+    """에어컨 상태 조회 API"""
+    if not AIR_CONDITIONER_AVAILABLE:
+        return jsonify({
+            'success': False,
+            'error': '에어컨 모듈을 사용할 수 없습니다.'
+        }), 500
+    
+    try:
+        logger.info("📱 앱에서 에어컨 상태 조회 요청")
+        state_response = get_air_conditioner_state()
+        
+        # 응답 구조 분석 및 상태 정보 추출
+        state = None
+        if 'result' in state_response and 'value' in state_response['result']:
+            state = state_response['result']['value']
+        elif 'response' in state_response:
+            response = state_response['response']
+            if isinstance(response, dict):
+                if 'value' in response:
+                    state = response['value']
+                else:
+                    state = response
+        
+        if state:
+            # 상태 정보를 앱에서 사용하기 쉬운 형태로 변환
+            result = {
+                'success': True,
+                'device_id': AIR_CONDITIONER_DEVICE_ID,
+                'state': {
+                    'power_on': state.get('operation', {}).get('airConOperationMode') == 'POWER_ON',
+                    'current_temperature': state.get('temperature', {}).get('currentTemperature'),
+                    'target_temperature': state.get('temperature', {}).get('targetTemperature'),
+                    'temperature_unit': state.get('temperature', {}).get('unit', 'C'),
+                    'job_mode': state.get('airConJobMode', {}).get('currentJobMode'),
+                    'wind_strength': state.get('airFlow', {}).get('windStrength'),
+                    'air_quality': {
+                        'pm1': state.get('airQualitySensor', {}).get('PM1'),
+                        'pm2': state.get('airQualitySensor', {}).get('PM2'),
+                        'pm10': state.get('airQualitySensor', {}).get('PM10'),
+                        'humidity': state.get('airQualitySensor', {}).get('humidity')
+                    },
+                    'filter_percent': state.get('filterInfo', {}).get('filterRemainPercent'),
+                    'raw_state': state  # 전체 상태 정보도 포함
+                }
+            }
+            logger.info(f"✅ 에어컨 상태 조회 성공")
+            return jsonify(result)
+        else:
+            return jsonify({
+                'success': False,
+                'error': '상태 정보를 찾을 수 없습니다.',
+                'raw_response': state_response
+            }), 500
+            
+    except Exception as e:
+        logger.error(f"에어컨 상태 조회 실패: {str(e)}")
+        return jsonify({
+            'success': False,
+            'error': f'에어컨 상태 조회 실패: {str(e)}'
+        }), 500
+
+
+@app.route('/air_conditioner/control', methods=['POST'])
+def control_air_conditioner_api():
+    """에어컨 제어 API"""
+    if not AIR_CONDITIONER_AVAILABLE:
+        return jsonify({
+            'success': False,
+            'error': '에어컨 모듈을 사용할 수 없습니다.'
+        }), 500
+    
+    try:
+        data = request.get_json()
+        logger.info(f"📱 앱에서 에어컨 제어 요청: {data}")
+        
+        action = data.get('action')
+        if not action:
+            return jsonify({
+                'success': False,
+                'error': 'action 파라미터가 필요합니다.'
+            }), 400
+        
+        result = None
+        
+        if action == 'set_temperature':
+            target_temp = data.get('target_temperature')
+            unit = data.get('unit', 'C')
+            if target_temp is None:
+                return jsonify({
+                    'success': False,
+                    'error': 'target_temperature 파라미터가 필요합니다.'
+                }), 400
+            result = set_temperature(target_temp=float(target_temp), unit=unit)
+            
+        elif action == 'set_mode':
+            mode = data.get('mode')
+            if not mode:
+                return jsonify({
+                    'success': False,
+                    'error': 'mode 파라미터가 필요합니다.'
+                }), 400
+            result = set_job_mode(mode=mode)
+            
+        elif action == 'set_wind_strength':
+            strength = data.get('strength')
+            if not strength:
+                return jsonify({
+                    'success': False,
+                    'error': 'strength 파라미터가 필요합니다.'
+                }), 400
+            result = set_wind_strength(strength=strength)
+            
+        elif action == 'set_power':
+            power_on = data.get('power_on', True)
+            result = set_power(power_on=bool(power_on))
+            
+        else:
+            return jsonify({
+                'success': False,
+                'error': f'지원하지 않는 action: {action}'
+            }), 400
+        
+        logger.info(f"✅ 에어컨 제어 성공: {action}")
+        return jsonify({
+            'success': True,
+            'action': action,
+            'result': result
+        })
+        
+    except Exception as e:
+        logger.error(f"에어컨 제어 실패: {str(e)}")
+        return jsonify({
+            'success': False,
+            'error': f'에어컨 제어 실패: {str(e)}'
+        }), 500
 
 if __name__ == '__main__':
     # 서버 시작 시 모델 로드

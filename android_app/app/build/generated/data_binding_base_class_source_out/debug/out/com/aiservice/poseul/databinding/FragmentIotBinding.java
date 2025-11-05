@@ -12,6 +12,7 @@ import androidx.annotation.Nullable;
 import androidx.viewbinding.ViewBinding;
 import androidx.viewbinding.ViewBindings;
 import com.aiservice.poseul.R;
+import com.google.android.material.button.MaterialButton;
 import com.google.android.material.card.MaterialCardView;
 import java.lang.NullPointerException;
 import java.lang.Override;
@@ -37,28 +38,82 @@ public final class FragmentIotBinding implements ViewBinding {
   public final TextView errorText;
 
   @NonNull
+  public final MaterialButton modeAutoButton;
+
+  @NonNull
+  public final MaterialButton modeCleanButton;
+
+  @NonNull
+  public final MaterialButton modeCoolButton;
+
+  @NonNull
+  public final MaterialButton modeDryButton;
+
+  @NonNull
   public final MaterialCardView otherDevicesCard;
 
   @NonNull
   public final TextView otherDevicesList;
 
   @NonNull
+  public final MaterialButton powerButton;
+
+  @NonNull
   public final ProgressBar progressBar;
+
+  @NonNull
+  public final MaterialButton refreshButton;
+
+  @NonNull
+  public final MaterialButton temperatureDownButton;
+
+  @NonNull
+  public final MaterialButton temperatureUpButton;
+
+  @NonNull
+  public final MaterialButton windAutoButton;
+
+  @NonNull
+  public final MaterialButton windHighButton;
+
+  @NonNull
+  public final MaterialButton windLowButton;
+
+  @NonNull
+  public final MaterialButton windMidButton;
 
   private FragmentIotBinding(@NonNull ScrollView rootView,
       @NonNull MaterialCardView airConditionerCard, @NonNull TextView airConditionerCurrentTemp,
       @NonNull TextView airConditionerStatus, @NonNull TextView airConditionerTargetTemp,
-      @NonNull TextView errorText, @NonNull MaterialCardView otherDevicesCard,
-      @NonNull TextView otherDevicesList, @NonNull ProgressBar progressBar) {
+      @NonNull TextView errorText, @NonNull MaterialButton modeAutoButton,
+      @NonNull MaterialButton modeCleanButton, @NonNull MaterialButton modeCoolButton,
+      @NonNull MaterialButton modeDryButton, @NonNull MaterialCardView otherDevicesCard,
+      @NonNull TextView otherDevicesList, @NonNull MaterialButton powerButton,
+      @NonNull ProgressBar progressBar, @NonNull MaterialButton refreshButton,
+      @NonNull MaterialButton temperatureDownButton, @NonNull MaterialButton temperatureUpButton,
+      @NonNull MaterialButton windAutoButton, @NonNull MaterialButton windHighButton,
+      @NonNull MaterialButton windLowButton, @NonNull MaterialButton windMidButton) {
     this.rootView = rootView;
     this.airConditionerCard = airConditionerCard;
     this.airConditionerCurrentTemp = airConditionerCurrentTemp;
     this.airConditionerStatus = airConditionerStatus;
     this.airConditionerTargetTemp = airConditionerTargetTemp;
     this.errorText = errorText;
+    this.modeAutoButton = modeAutoButton;
+    this.modeCleanButton = modeCleanButton;
+    this.modeCoolButton = modeCoolButton;
+    this.modeDryButton = modeDryButton;
     this.otherDevicesCard = otherDevicesCard;
     this.otherDevicesList = otherDevicesList;
+    this.powerButton = powerButton;
     this.progressBar = progressBar;
+    this.refreshButton = refreshButton;
+    this.temperatureDownButton = temperatureDownButton;
+    this.temperatureUpButton = temperatureUpButton;
+    this.windAutoButton = windAutoButton;
+    this.windHighButton = windHighButton;
+    this.windLowButton = windLowButton;
+    this.windMidButton = windMidButton;
   }
 
   @Override
@@ -118,6 +173,30 @@ public final class FragmentIotBinding implements ViewBinding {
         break missingId;
       }
 
+      id = R.id.mode_auto_button;
+      MaterialButton modeAutoButton = ViewBindings.findChildViewById(rootView, id);
+      if (modeAutoButton == null) {
+        break missingId;
+      }
+
+      id = R.id.mode_clean_button;
+      MaterialButton modeCleanButton = ViewBindings.findChildViewById(rootView, id);
+      if (modeCleanButton == null) {
+        break missingId;
+      }
+
+      id = R.id.mode_cool_button;
+      MaterialButton modeCoolButton = ViewBindings.findChildViewById(rootView, id);
+      if (modeCoolButton == null) {
+        break missingId;
+      }
+
+      id = R.id.mode_dry_button;
+      MaterialButton modeDryButton = ViewBindings.findChildViewById(rootView, id);
+      if (modeDryButton == null) {
+        break missingId;
+      }
+
       id = R.id.other_devices_card;
       MaterialCardView otherDevicesCard = ViewBindings.findChildViewById(rootView, id);
       if (otherDevicesCard == null) {
@@ -130,15 +209,65 @@ public final class FragmentIotBinding implements ViewBinding {
         break missingId;
       }
 
+      id = R.id.power_button;
+      MaterialButton powerButton = ViewBindings.findChildViewById(rootView, id);
+      if (powerButton == null) {
+        break missingId;
+      }
+
       id = R.id.progress_bar;
       ProgressBar progressBar = ViewBindings.findChildViewById(rootView, id);
       if (progressBar == null) {
         break missingId;
       }
 
+      id = R.id.refresh_button;
+      MaterialButton refreshButton = ViewBindings.findChildViewById(rootView, id);
+      if (refreshButton == null) {
+        break missingId;
+      }
+
+      id = R.id.temperature_down_button;
+      MaterialButton temperatureDownButton = ViewBindings.findChildViewById(rootView, id);
+      if (temperatureDownButton == null) {
+        break missingId;
+      }
+
+      id = R.id.temperature_up_button;
+      MaterialButton temperatureUpButton = ViewBindings.findChildViewById(rootView, id);
+      if (temperatureUpButton == null) {
+        break missingId;
+      }
+
+      id = R.id.wind_auto_button;
+      MaterialButton windAutoButton = ViewBindings.findChildViewById(rootView, id);
+      if (windAutoButton == null) {
+        break missingId;
+      }
+
+      id = R.id.wind_high_button;
+      MaterialButton windHighButton = ViewBindings.findChildViewById(rootView, id);
+      if (windHighButton == null) {
+        break missingId;
+      }
+
+      id = R.id.wind_low_button;
+      MaterialButton windLowButton = ViewBindings.findChildViewById(rootView, id);
+      if (windLowButton == null) {
+        break missingId;
+      }
+
+      id = R.id.wind_mid_button;
+      MaterialButton windMidButton = ViewBindings.findChildViewById(rootView, id);
+      if (windMidButton == null) {
+        break missingId;
+      }
+
       return new FragmentIotBinding((ScrollView) rootView, airConditionerCard,
           airConditionerCurrentTemp, airConditionerStatus, airConditionerTargetTemp, errorText,
-          otherDevicesCard, otherDevicesList, progressBar);
+          modeAutoButton, modeCleanButton, modeCoolButton, modeDryButton, otherDevicesCard,
+          otherDevicesList, powerButton, progressBar, refreshButton, temperatureDownButton,
+          temperatureUpButton, windAutoButton, windHighButton, windLowButton, windMidButton);
     }
     String missingId = rootView.getResources().getResourceName(id);
     throw new NullPointerException("Missing required view with ID: ".concat(missingId));

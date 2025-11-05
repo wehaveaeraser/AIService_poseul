@@ -15,6 +15,11 @@ android {
         versionName "1.0"
 
         testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
+        
+        // 서버 URL 설정
+        // 에뮬레이터: 10.0.2.2
+        // 실제 기기: 컴퓨터의 IP 주소 (예: 192.168.0.143)
+        buildConfigField "String", "SERVER_URL", '"http://10.0.2.2:5000"'
     }
 
     buildTypes {
@@ -32,6 +37,7 @@ android {
     }
     buildFeatures {
         viewBinding true
+        buildConfig true
     }
 }
 
