@@ -3,7 +3,10 @@ package com.aiservice.poseul.ui.user
 import androidx.lifecycle.LiveData
 import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.ViewModel
-import kotlinx.coroutines.*
+import androidx.lifecycle.viewModelScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 
 data class UserInfo(
     val userId: String,
@@ -22,11 +25,12 @@ class UserViewModel : ViewModel() {
     private val _retrainMessage = MutableLiveData<String>()
     val retrainMessage: LiveData<String> = _retrainMessage
 
-    private val viewModelScope = CoroutineScope(Dispatchers.Main + SupervisorJob())
-
     init {
-        // 초기 사용자 정보 로드 (실제로는 SharedPreferences나 API에서 로드)
-        loadUserInfo()
+        // 앱 시작 시 메인 스레드 부하를 줄이기 위해 지연 로딩
+        viewModelScope.launch(Dispatchers.Main) {
+            kotlinx.coroutines.delay(200) // UI 렌더링 후 로드
+            loadUserInfo()
+        }
     }
 
     private fun loadUserInfo() {
@@ -59,7 +63,7 @@ class UserViewModel : ViewModel() {
         }
     }
 
-    private suspend fun simulateRetraining() {
+    private suspend fun simulateRetraining() = withContext(Dispatchers.Default) {
         val steps = listOf(
             "데이터 수집 중...",
             "데이터 전처리 중...",
@@ -69,19 +73,14 @@ class UserViewModel : ViewModel() {
         )
 
         steps.forEachIndexed { index, step ->
-            _retrainMessage.value = step
-            delay(2000) // 각 단계마다 2초 대기
+            _retrainMessage.postValue(step)
+            kotlinx.coroutines.delay(2000) // 각 단계마다 2초 대기
         }
 
-        _retrainMessage.value = "모델 재학습이 완료되었습니다!"
+        _retrainMessage.postValue("모델 재학습이 완료되었습니다!")
         
         // 3초 후 메시지 숨기기
-        delay(3000)
-        _retrainMessage.value = ""
-    }
-
-    override fun onCleared() {
-        super.onCleared()
-        viewModelScope.cancel()
+        kotlinx.coroutines.delay(3000)
+        _retrainMessage.postValue("")
     }
 }

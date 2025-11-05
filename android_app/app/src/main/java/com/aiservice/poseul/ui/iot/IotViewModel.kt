@@ -3,7 +3,10 @@ package com.aiservice.poseul.ui.iot
 import androidx.lifecycle.LiveData
 import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.ViewModel
-import kotlinx.coroutines.*
+import androidx.lifecycle.viewModelScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 
 data class IotDevice(
     val id: String,
@@ -25,11 +28,8 @@ class IotViewModel : ViewModel() {
     private val _errorMessage = MutableLiveData<String>()
     val errorMessage: LiveData<String> = _errorMessage
 
-    private val viewModelScope = CoroutineScope(Dispatchers.Main + SupervisorJob())
-
-    init {
-        loadIotDevices()
-    }
+    // 앱 시작 시 메인 스레드 부하를 줄이기 위해 자동 로딩 제거
+    // 필요할 때 refreshDevices()를 호출하여 로드
 
     private fun loadIotDevices() {
         viewModelScope.launch {
@@ -45,8 +45,8 @@ class IotViewModel : ViewModel() {
         }
     }
 
-    private suspend fun simulateIotDevices() {
-        delay(1500) // 1.5초 대기 (실제 로딩 시뮬레이션)
+    private suspend fun simulateIotDevices() = withContext(Dispatchers.Default) {
+        kotlinx.coroutines.delay(1500) // 1.5초 대기 (실제 로딩 시뮬레이션)
         
         val devices = listOf(
             IotDevice(
@@ -71,15 +71,10 @@ class IotViewModel : ViewModel() {
             )
         )
         
-        _iotDevices.value = devices
+        _iotDevices.postValue(devices)
     }
 
     fun refreshDevices() {
         loadIotDevices()
-    }
-
-    override fun onCleared() {
-        super.onCleared()
-        viewModelScope.cancel()
     }
 }

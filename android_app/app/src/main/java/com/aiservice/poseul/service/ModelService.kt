@@ -13,7 +13,7 @@ import android.util.Log
 class ModelService {
     
     companion object {
-        private const val SERVER_URL = "http://10.0.2.2:5000" // 현재 PC의 Wi-Fi IP 주소
+        private const val SERVER_URL = "http://10.0.2.2:5000" // 에뮬레이터에서 호스트 PC 접근용 IP
         private const val PREDICT_ENDPOINT = "/predict"
         private const val HEALTH_ENDPOINT = "/health"
         private const val MODEL_INFO_ENDPOINT = "/model_info"
@@ -52,9 +52,15 @@ class ModelService {
         age: Int
     ): PredictionResult = withContext(Dispatchers.IO) {
         try {
-            // 서버 상태 확인
-            if (!checkServerHealth()) {
-                return@withContext PredictionResult.Error("서버에 연결할 수 없습니다.")
+            // 서버 상태 확인 (타임아웃 처리)
+            try {
+                val healthCheckResult = checkServerHealth()
+                if (!healthCheckResult) {
+                    return@withContext PredictionResult.Error("서버에 연결할 수 없습니다. 서버가 실행 중인지 확인하세요.")
+                }
+            } catch (e: Exception) {
+                Log.e("ModelService", "서버 연결 실패", e)
+                return@withContext PredictionResult.Error("서버 연결 실패: ${e.message}")
             }
             
             // 예측 요청 데이터 준비
@@ -85,16 +91,21 @@ class ModelService {
     }
     
     private suspend fun checkServerHealth(): Boolean = withContext(Dispatchers.IO) {
+        var connection: HttpURLConnection? = null
         try {
             val fullUrl = "$SERVER_URL$HEALTH_ENDPOINT"
             Log.i("ModelService", "🔍 [HEALTH CHECK] 서버 상태 확인 시작")
             Log.d("ModelService", "🌐 [HEALTH CHECK] 요청 URL: $fullUrl")
             
             val url = URL(fullUrl)
-            val connection = url.openConnection() as HttpURLConnection
+            connection = url.openConnection() as HttpURLConnection
             connection.requestMethod = "GET"
-            connection.connectTimeout = 5000
-            connection.readTimeout = 5000
+            connection.connectTimeout = 5000  // 타임아웃을 5초로 단축
+            connection.readTimeout = 5000      // 타임아웃을 5초로 단축
+            connection.setRequestProperty("Connection", "close")
+            connection.setRequestProperty("Accept", "application/json")
+            connection.setRequestProperty("User-Agent", "Android-App")
+            connection.useCaches = false
             
             Log.d("ModelService", "🔗 [HEALTH CHECK] HTTP 연결 설정 완료")
             Log.d("ModelService", "⏱️ [HEALTH CHECK] 연결 시도 중... (타임아웃: 5초)")
@@ -103,90 +114,156 @@ class ModelService {
             Log.i("ModelService", "📡 [HEALTH CHECK] HTTP 응답 코드: $responseCode")
             
             if (responseCode == HttpURLConnection.HTTP_OK) {
-                val response = connection.inputStream.bufferedReader().use { it.readText() }
+                val response = connection.inputStream?.bufferedReader()?.use { it.readText() } ?: ""
                 Log.i("ModelService", "✅ [HEALTH CHECK] 서버 응답 수신: $response")
                 
-                val healthResponse = gson.fromJson(response, HealthResponse::class.java)
-                Log.i("ModelService", "🏥 [HEALTH CHECK] 모델 로드 상태: ${healthResponse.modelLoaded}")
-                Log.i("ModelService", "🎯 [HEALTH CHECK] 서버 상태: ${healthResponse.status}")
-                
-                if (healthResponse.modelLoaded) {
-                    Log.i("ModelService", "🎉 [HEALTH CHECK] 서버 연결 성공! 모델 준비 완료")
-                } else {
-                    Log.w("ModelService", "⚠️ [HEALTH CHECK] 서버는 연결되었지만 모델이 로드되지 않음")
+                try {
+                    val healthResponse = gson.fromJson(response, HealthResponse::class.java)
+                    Log.i("ModelService", "🏥 [HEALTH CHECK] 모델 로드 상태: ${healthResponse.modelLoaded}")
+                    Log.i("ModelService", "🎯 [HEALTH CHECK] 서버 상태: ${healthResponse.status}")
+                    
+                    if (healthResponse.modelLoaded) {
+                        Log.i("ModelService", "🎉 [HEALTH CHECK] 서버 연결 성공! 모델 준비 완료")
+                    } else {
+                        Log.w("ModelService", "⚠️ [HEALTH CHECK] 서버는 연결되었지만 모델이 로드되지 않음")
+                    }
+                    
+                    return@withContext healthResponse.modelLoaded
+                } catch (e: Exception) {
+                    Log.e("ModelService", "💥 [HEALTH CHECK] JSON 파싱 오류", e)
+                    return@withContext false
                 }
-                
-                healthResponse.modelLoaded
             } else {
                 Log.e("ModelService", "❌ [HEALTH CHECK] 서버 응답 실패: $responseCode")
                 Log.e("ModelService", "❌ [HEALTH CHECK] 응답 메시지: ${connection.responseMessage}")
-                false
+                return@withContext false
             }
+        } catch (e: java.net.SocketTimeoutException) {
+            Log.e("ModelService", "⏰ [HEALTH CHECK] 연결 타임아웃", e)
+            return@withContext false
+        } catch (e: java.net.ConnectException) {
+            Log.e("ModelService", "🔌 [HEALTH CHECK] 연결 거부 - 서버가 실행되지 않았을 수 있습니다", e)
+            return@withContext false
         } catch (e: Exception) {
             Log.e("ModelService", "💥 [HEALTH CHECK] 서버 연결 오류 발생", e)
             Log.e("ModelService", "💥 [HEALTH CHECK] 오류 메시지: ${e.message}")
             Log.e("ModelService", "💥 [HEALTH CHECK] 오류 타입: ${e.javaClass.simpleName}")
-            false
+            return@withContext false
+        } finally {
+            connection?.disconnect()
         }
     }
     
     private suspend fun makePredictionRequest(request: PredictionRequest): PredictionResponse = withContext(Dispatchers.IO) {
-        val predictUrl = "$SERVER_URL$PREDICT_ENDPOINT"
-        Log.i("ModelService", "🚀 [PREDICTION] 예측 요청 시작")
-        Log.d("ModelService", "🌐 [PREDICTION] 요청 URL: $predictUrl")
-        Log.i("ModelService", "📊 [PREDICTION] 요청 데이터: HR=${request.hrMean}, HRV=${request.hrvSdnn}, BMI=${request.bmi}, SaO2=${request.meanSa02}, Gender=${request.gender}, Age=${request.age}")
-        
-        val url = URL(predictUrl)
-        val connection = url.openConnection() as HttpURLConnection
-        
-        connection.requestMethod = "POST"
-        connection.setRequestProperty("Content-Type", "application/json")
-        connection.doOutput = true
-        connection.connectTimeout = 10000
-        connection.readTimeout = 10000
-        
-        Log.d("ModelService", "🔗 [PREDICTION] HTTP POST 연결 설정 완료")
-        Log.d("ModelService", "⏱️ [PREDICTION] 연결 시도 중... (타임아웃: 10초)")
-        
-        // 요청 데이터 전송
-        val requestJson = gson.toJson(request)
-        Log.d("ModelService", "📤 [PREDICTION] JSON 데이터 전송: $requestJson")
-        
-        val outputStream = connection.outputStream
-        val writer = OutputStreamWriter(outputStream)
-        writer.write(requestJson)
-        writer.flush()
-        writer.close()
-        
-        Log.d("ModelService", "✅ [PREDICTION] 요청 데이터 전송 완료")
-        
-        // 응답 읽기
-        val responseCode = connection.responseCode
-        Log.i("ModelService", "📡 [PREDICTION] HTTP 응답 코드: $responseCode")
-        
-        val responseText = if (responseCode == HttpURLConnection.HTTP_OK) {
-            val response = connection.inputStream.bufferedReader().use { it.readText() }
-            Log.i("ModelService", "✅ [PREDICTION] 서버 응답 수신 성공")
-            Log.d("ModelService", "📥 [PREDICTION] 응답 내용: $response")
-            response
-        } else {
-            val errorResponse = connection.errorStream.bufferedReader().use { it.readText() }
-            Log.e("ModelService", "❌ [PREDICTION] 서버 응답 실패")
-            Log.e("ModelService", "❌ [PREDICTION] 에러 응답: $errorResponse")
-            errorResponse
+        var connection: HttpURLConnection? = null
+        var writer: OutputStreamWriter? = null
+        try {
+            val predictUrl = "$SERVER_URL$PREDICT_ENDPOINT"
+            Log.i("ModelService", "🚀 [PREDICTION] 예측 요청 시작")
+            Log.d("ModelService", "🌐 [PREDICTION] 요청 URL: $predictUrl")
+            Log.i("ModelService", "📊 [PREDICTION] 요청 데이터: HR=${request.hrMean}, HRV=${request.hrvSdnn}, BMI=${request.bmi}, SaO2=${request.meanSa02}, Gender=${request.gender}, Age=${request.age}")
+            
+            val url = URL(predictUrl)
+            connection = url.openConnection() as HttpURLConnection
+            
+            connection.requestMethod = "POST"
+            connection.setRequestProperty("Content-Type", "application/json")
+            connection.setRequestProperty("Connection", "close")
+            connection.setRequestProperty("Accept", "application/json")
+            connection.setRequestProperty("User-Agent", "Android-App")
+            connection.doOutput = true
+            connection.connectTimeout = 5000   // 타임아웃을 5초로 단축
+            connection.readTimeout = 5000     // 타임아웃을 5초로 단축
+            connection.useCaches = false
+            
+            Log.d("ModelService", "🔗 [PREDICTION] HTTP POST 연결 설정 완료")
+            Log.d("ModelService", "⏱️ [PREDICTION] 연결 시도 중... (타임아웃: 5초)")
+            
+            // 요청 데이터 전송
+            val requestJson = gson.toJson(request)
+            Log.d("ModelService", "📤 [PREDICTION] JSON 데이터 전송: $requestJson")
+            
+            writer = OutputStreamWriter(connection.outputStream, "UTF-8")
+            writer.write(requestJson)
+            writer.flush()
+            
+            Log.d("ModelService", "✅ [PREDICTION] 요청 데이터 전송 완료")
+            
+            // 응답 읽기
+            val responseCode = connection.responseCode
+            Log.i("ModelService", "📡 [PREDICTION] HTTP 응답 코드: $responseCode")
+            
+            val responseText = if (responseCode == HttpURLConnection.HTTP_OK) {
+                connection.inputStream?.bufferedReader()?.use { it.readText() } ?: "{}"
+            } else {
+                connection.errorStream?.bufferedReader()?.use { it.readText() } ?: "{\"success\":false,\"error\":\"HTTP $responseCode\"}"
+            }
+            
+            if (responseCode == HttpURLConnection.HTTP_OK) {
+                Log.i("ModelService", "✅ [PREDICTION] 서버 응답 수신 성공")
+                Log.d("ModelService", "📥 [PREDICTION] 응답 내용: $responseText")
+            } else {
+                Log.e("ModelService", "❌ [PREDICTION] 서버 응답 실패")
+                Log.e("ModelService", "❌ [PREDICTION] 에러 응답: $responseText")
+            }
+            
+            try {
+                val predictionResponse = gson.fromJson(responseText, PredictionResponse::class.java)
+                
+                if (predictionResponse.success) {
+                    Log.i("ModelService", "🎉 [PREDICTION] 예측 성공!")
+                    Log.i("ModelService", "🌡️ [PREDICTION] 예측된 온도: ${predictionResponse.predictedTemperature}°C")
+                    Log.i("ModelService", "🏷️ [PREDICTION] 온도 카테고리: ${predictionResponse.temperatureCategory}")
+                } else {
+                    Log.e("ModelService", "❌ [PREDICTION] 예측 실패: ${predictionResponse.error}")
+                }
+                
+                return@withContext predictionResponse
+            } catch (e: Exception) {
+                Log.e("ModelService", "💥 [PREDICTION] JSON 파싱 오류", e)
+                return@withContext PredictionResponse(
+                    success = false,
+                    predictedTemperature = 0.0,
+                    temperatureCategory = "",
+                    inputData = null,
+                    error = "응답 파싱 실패: ${e.message}"
+                )
+            }
+        } catch (e: java.net.SocketTimeoutException) {
+            Log.e("ModelService", "⏰ [PREDICTION] 연결 타임아웃", e)
+            return@withContext PredictionResponse(
+                success = false,
+                predictedTemperature = 0.0,
+                temperatureCategory = "",
+                inputData = null,
+                error = "서버 연결 타임아웃"
+            )
+        } catch (e: java.net.ConnectException) {
+            Log.e("ModelService", "🔌 [PREDICTION] 연결 거부", e)
+            return@withContext PredictionResponse(
+                success = false,
+                predictedTemperature = 0.0,
+                temperatureCategory = "",
+                inputData = null,
+                error = "서버에 연결할 수 없습니다"
+            )
+        } catch (e: Exception) {
+            Log.e("ModelService", "💥 [PREDICTION] 예측 요청 오류", e)
+            return@withContext PredictionResponse(
+                success = false,
+                predictedTemperature = 0.0,
+                temperatureCategory = "",
+                inputData = null,
+                error = "예측 요청 실패: ${e.message ?: "알 수 없는 오류"}"
+            )
+        } finally {
+            try {
+                writer?.close()
+            } catch (e: Exception) {
+                Log.w("ModelService", "⚠️ [PREDICTION] Writer 닫기 실패", e)
+            }
+            connection?.disconnect()
         }
-        
-        val predictionResponse = gson.fromJson(responseText, PredictionResponse::class.java)
-        
-        if (predictionResponse.success) {
-            Log.i("ModelService", "🎉 [PREDICTION] 예측 성공!")
-            Log.i("ModelService", "🌡️ [PREDICTION] 예측된 온도: ${predictionResponse.predictedTemperature}°C")
-            Log.i("ModelService", "🏷️ [PREDICTION] 온도 카테고리: ${predictionResponse.temperatureCategory}")
-        } else {
-            Log.e("ModelService", "❌ [PREDICTION] 예측 실패: ${predictionResponse.error}")
-        }
-        
-        predictionResponse
     }
     
     suspend fun getModelInfo(): String = withContext(Dispatchers.IO) {

@@ -25,18 +25,19 @@
             android:layout_marginBottom="20dp" />
 
         <!-- 온도 예측 섹션 -->
-        <com.google.android.material.card.MaterialCardView
+        <FrameLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:layout_marginBottom="16dp"
-            app:cardCornerRadius="12dp"
-            app:cardElevation="4dp">
+            android:background="@android:drawable/dialog_holo_light_frame"
+            android:elevation="4dp">
 
             <LinearLayout
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:orientation="vertical"
-                android:padding="20dp">
+                android:padding="20dp"
+                android:background="#FFFFFFFF">
 
                 <TextView
                     android:layout_width="wrap_content"
@@ -57,7 +58,7 @@
                         android:id="@+id/temperature_value"
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
-                        android:text="25.5°C"
+                        android:text="35.0°C"
                         android:textSize="32sp"
                         android:textStyle="bold"
                         android:textColor="#FF2196F3" />
@@ -75,21 +76,22 @@
 
             </LinearLayout>
 
-        </com.google.android.material.card.MaterialCardView>
+        </FrameLayout>
 
         <!-- 심박수 차트 섹션 -->
-        <com.google.android.material.card.MaterialCardView
+        <FrameLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:layout_marginBottom="16dp"
-            app:cardCornerRadius="12dp"
-            app:cardElevation="4dp">
+            android:background="@android:drawable/dialog_holo_light_frame"
+            android:elevation="4dp">
 
             <LinearLayout
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:orientation="vertical"
-                android:padding="20dp">
+                android:padding="20dp"
+                android:background="#FFFFFFFF">
 
                 <TextView
                     android:layout_width="wrap_content"
@@ -99,29 +101,31 @@
                     android:textStyle="bold"
                     android:textColor="#FF212121" />
 
-                <com.github.mikephil.charting.charts.LineChart
-                    android:id="@+id/heart_rate_chart"
+                <!-- 차트는 나중에 프로그래밍 방식으로 추가 -->
+                <FrameLayout
+                    android:id="@+id/heart_rate_chart_container"
                     android:layout_width="match_parent"
                     android:layout_height="200dp"
                     android:layout_marginTop="12dp" />
 
             </LinearLayout>
 
-        </com.google.android.material.card.MaterialCardView>
+        </FrameLayout>
 
         <!-- 모델 테스트 섹션 -->
-        <com.google.android.material.card.MaterialCardView
+        <FrameLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:layout_marginBottom="16dp"
-            app:cardCornerRadius="12dp"
-            app:cardElevation="4dp">
+            android:background="@android:drawable/dialog_holo_light_frame"
+            android:elevation="4dp">
 
             <LinearLayout
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:orientation="vertical"
-                android:padding="20dp">
+                android:padding="20dp"
+                android:background="#FFFFFFFF">
 
                 <TextView
                     android:layout_width="wrap_content"
@@ -142,7 +146,7 @@
 
             </LinearLayout>
 
-        </com.google.android.material.card.MaterialCardView>
+        </FrameLayout>
 
         <!-- 로딩 및 에러 표시 -->
         <ProgressBar

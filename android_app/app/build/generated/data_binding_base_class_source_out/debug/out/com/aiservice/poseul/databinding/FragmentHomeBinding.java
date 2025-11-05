@@ -5,6 +5,7 @@ import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.Button;
+import android.widget.FrameLayout;
 import android.widget.ProgressBar;
 import android.widget.ScrollView;
 import android.widget.TextView;
@@ -13,7 +14,6 @@ import androidx.annotation.Nullable;
 import androidx.viewbinding.ViewBinding;
 import androidx.viewbinding.ViewBindings;
 import com.aiservice.poseul.R;
-import com.github.mikephil.charting.charts.LineChart;
 import java.lang.NullPointerException;
 import java.lang.Override;
 import java.lang.String;
@@ -26,7 +26,7 @@ public final class FragmentHomeBinding implements ViewBinding {
   public final TextView errorText;
 
   @NonNull
-  public final LineChart heartRateChart;
+  public final FrameLayout heartRateChartContainer;
 
   @NonNull
   public final ProgressBar progressBar;
@@ -41,12 +41,12 @@ public final class FragmentHomeBinding implements ViewBinding {
   public final Button testModelButton;
 
   private FragmentHomeBinding(@NonNull ScrollView rootView, @NonNull TextView errorText,
-      @NonNull LineChart heartRateChart, @NonNull ProgressBar progressBar,
+      @NonNull FrameLayout heartRateChartContainer, @NonNull ProgressBar progressBar,
       @NonNull TextView temperatureStatus, @NonNull TextView temperatureValue,
       @NonNull Button testModelButton) {
     this.rootView = rootView;
     this.errorText = errorText;
-    this.heartRateChart = heartRateChart;
+    this.heartRateChartContainer = heartRateChartContainer;
     this.progressBar = progressBar;
     this.temperatureStatus = temperatureStatus;
     this.temperatureValue = temperatureValue;
@@ -86,9 +86,9 @@ public final class FragmentHomeBinding implements ViewBinding {
         break missingId;
       }
 
-      id = R.id.heart_rate_chart;
-      LineChart heartRateChart = ViewBindings.findChildViewById(rootView, id);
-      if (heartRateChart == null) {
+      id = R.id.heart_rate_chart_container;
+      FrameLayout heartRateChartContainer = ViewBindings.findChildViewById(rootView, id);
+      if (heartRateChartContainer == null) {
         break missingId;
       }
 
@@ -116,8 +116,8 @@ public final class FragmentHomeBinding implements ViewBinding {
         break missingId;
       }
 
-      return new FragmentHomeBinding((ScrollView) rootView, errorText, heartRateChart, progressBar,
-          temperatureStatus, temperatureValue, testModelButton);
+      return new FragmentHomeBinding((ScrollView) rootView, errorText, heartRateChartContainer,
+          progressBar, temperatureStatus, temperatureValue, testModelButton);
     }
     String missingId = rootView.getResources().getResourceName(id);
     throw new NullPointerException("Missing required view with ID: ".concat(missingId));

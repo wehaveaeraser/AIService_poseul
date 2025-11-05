@@ -131,13 +131,14 @@ def predict():
             age=int(data['age'])
         )
         
-        # 온도 분류
-        def classify_temperature(temp, cold_threshold=33.0, hot_threshold=35.0):
-            if temp < cold_threshold:
-                return "냉기"
-            elif temp > hot_threshold:
-                return "더위"
+        # 온도 분류 (앱과 동일한 기준: 34.5도부터 35.6도까지 쾌적 범위에 포함)
+        def classify_temperature(temp, cold_threshold=34.5, hot_threshold=35.6):
+            if temp < 34.5:
+                return "추움"
+            elif temp > 35.6:
+                return "더움"
             else:
+                # 34.5 <= temp <= 35.6: 쾌적함 (경계값 포함)
                 return "적정"
         
         temperature_category = classify_temperature(predicted_temp)

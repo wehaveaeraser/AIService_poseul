@@ -59,7 +59,6 @@ def test_prediction():
                 "gender": "F",
                 "age": 30
             }
-        },
         {
             "name": "높은 심박수 (40대 남성)",
             "data": {

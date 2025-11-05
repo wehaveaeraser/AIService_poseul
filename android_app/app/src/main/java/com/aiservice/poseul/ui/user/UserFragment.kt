@@ -11,7 +11,7 @@ import com.aiservice.poseul.databinding.FragmentUserBinding
 class UserFragment : Fragment() {
 
     private var _binding: FragmentUserBinding? = null
-    private val binding get() = _binding!!
+    private val binding get() = _binding ?: throw IllegalStateException("Binding should only be accessed when view is available")
 
     override fun onCreateView(
         inflater: LayoutInflater,
